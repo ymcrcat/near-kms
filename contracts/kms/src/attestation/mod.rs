@@ -5,3 +5,4 @@ pub mod hash;
 pub mod measurements;
 pub mod quote;
 pub mod report_data;
+pub mod sev_snp;

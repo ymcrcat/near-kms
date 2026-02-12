@@ -5,6 +5,7 @@ use super::{
     measurements::ExpectedMeasurements,
     quote::QuoteBytes,
     report_data::ReportData,
+    sev_snp::{collateral::SevSnpCollateral, report::SevSnpReport, verification},
 };
 use alloc::{format, string::String};
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -43,7 +44,27 @@ const RTMR3_INDEX: u32 = 3;
 )]
 pub enum Attestation {
     Dstack(DstackAttestation),
+    SevSnp(SevSnpAttestation),
     Local(LocalAttestation),
+}
+
+#[derive(Clone, Constructor, Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
+#[cfg_attr(
+    all(feature = "abi", not(target_arch = "wasm32")),
+    derive(borsh::BorshSchema)
+)]
+pub struct SevSnpAttestation {
+    pub report_bytes: QuoteBytes,
+    pub collateral: SevSnpCollateral,
+}
+
+impl fmt::Debug for SevSnpAttestation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SevSnpAttestation")
+            .field("report_bytes_len", &self.report_bytes.len())
+            .field("processor_model", &self.collateral.processor_model)
+            .finish()
+    }
 }
 
 #[derive(Clone, Constructor, Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
@@ -108,8 +129,58 @@ impl Attestation {
                 allowed_mpc_docker_image_hashes,
                 allowed_launcher_docker_compose_hashes,
             ),
+            Self::SevSnp(sev_snp_attestation) => {
+                Self::verify_sev_snp(sev_snp_attestation, &expected_report_data)
+            }
             Self::Local(config) => config.verification_result,
         }
+    }
+
+    /// Verifies an AMD SEV-SNP attestation report:
+    /// 1. Parses the raw report bytes
+    /// 2. Validates the certificate chain (ARK -> ASK -> VCEK)
+    /// 3. Verifies the report signature (ECDSA P-384) using the VCEK public key
+    /// 4. Verifies report_data matches the expected value (worker key binding)
+    fn verify_sev_snp(
+        attestation: &SevSnpAttestation,
+        expected_report_data: &ReportData,
+    ) -> bool {
+        // Step 1: Parse report
+        let report = match SevSnpReport::from_bytes(&attestation.report_bytes) {
+            Ok(r) => r,
+            Err(err) => {
+                log!("SEV-SNP: Failed to parse attestation report: {}", err);
+                return false;
+            }
+        };
+
+        // Step 2+3: Validate cert chain and verify report signature
+        let crypto_ok =
+            match verification::verify_attestation(&attestation.report_bytes, &report, &attestation.collateral)
+            {
+                Ok(()) => true,
+                Err(err) => {
+                    log!("SEV-SNP: Attestation verification failed: {}", err);
+                    false
+                }
+            };
+        log!(
+            "SEV-SNP cert chain + signature verification: {}",
+            if crypto_ok { "PASSED" } else { "FAILED" }
+        );
+
+        // Step 4: Verify report_data matches expected (worker key binding)
+        let report_data_ok = expected_report_data.to_bytes() == report.report_data;
+        log!(
+            "SEV-SNP report data verification: {}",
+            if report_data_ok { "PASSED" } else { "FAILED" }
+        );
+
+        let all_ok = crypto_ok && report_data_ok;
+        if !all_ok {
+            log!("SEV-SNP attestation verification failed. Check logs above for details.");
+        }
+        all_ok
     }
 
     /// Checks whether the node is running the expected environment, including the expected Docker

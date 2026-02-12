@@ -16,11 +16,12 @@ use near_sdk::{
 use std::str::FromStr;
 
 use crate::attestation::{
-    attestation::{Attestation, DstackAttestation},
+    attestation::{Attestation, DstackAttestation, SevSnpAttestation},
     collateral::Collateral,
     hash::{DockerComposeHash, DockerImageHash},
     quote::QuoteBytes,
     report_data::ReportData,
+    sev_snp::{collateral::SevSnpCollateral, report::is_sev_snp_report},
 };
 use crate::events::Event;
 use crate::ext::{Bls12381G1PublicKey, CKDRequestArgs, CKDResponse, DomainId, ext_mpc};
@@ -147,34 +148,55 @@ impl Contract {
         contract
     }
 
-    /// Request KMS root key from NEAR MPC network using CKD
-    /// This function verifies the KMS app has an allowed compose hash and requests the key from MPC
+    /// Request KMS root key from NEAR MPC network using CKD.
+    ///
+    /// Supports both Intel TDX (via DCAP) and AMD SEV-SNP attestation.
+    /// The TEE type is auto-detected from the quote format:
+    /// - SEV-SNP reports are exactly 0x4A0 bytes with version >= 2 and sig_algo == 1
+    /// - Everything else is treated as Intel TDX DCAP
+    ///
+    /// For TDX: `collateral` is the Intel DCAP collateral JSON, `tcb_info` is the Dstack TCB info.
+    /// For SEV-SNP: `collateral` is the `SevSnpCollateral` JSON, `tcb_info` is not used (pass `None`).
     #[payable]
     #[pause]
     pub fn request_kms_root_key(
         &mut self,
         quote_hex: String,
         collateral: String,
-        tcb_info: String,
+        tcb_info: Option<String>,
         worker_public_key: Bls12381G1PublicKey,
     ) -> PromiseOrValue<CKDResponse> {
         assert_one_yocto();
 
-        // Parse the attestation components
-        let quote_bytes = QuoteBytes::from(
-            decode(&quote_hex).unwrap_or_else(|_| env::panic_str("Invalid quote hex")),
-        );
-        let collateral_data = Collateral::from_str(&collateral)
-            .unwrap_or_else(|_| env::panic_str("Invalid collateral format"));
-        let tcb_info_data: TcbInfo = near_sdk::serde_json::from_str(&tcb_info)
-            .unwrap_or_else(|_| env::panic_str("Invalid TCB info format"));
+        // Decode the quote bytes for auto-detection
+        let quote_bytes_vec =
+            decode(&quote_hex).unwrap_or_else(|_| env::panic_str("Invalid quote hex"));
+        let quote_bytes = QuoteBytes::from(quote_bytes_vec.clone());
 
-        // Create the attestation
-        let attestation = Attestation::Dstack(DstackAttestation::new(
-            quote_bytes,
-            collateral_data,
-            tcb_info_data,
-        ));
+        // Auto-detect TEE type and build attestation
+        let attestation = if is_sev_snp_report(&quote_bytes_vec) {
+            // AMD SEV-SNP attestation
+            let snp_collateral: SevSnpCollateral =
+                near_sdk::serde_json::from_str(&collateral)
+                    .unwrap_or_else(|_| env::panic_str("Invalid SEV-SNP collateral format"));
+            log!("Detected SEV-SNP attestation (processor: {})", snp_collateral.processor_model);
+            Attestation::SevSnp(SevSnpAttestation::new(quote_bytes, snp_collateral))
+        } else {
+            // Intel TDX/DCAP attestation
+            let collateral_data = Collateral::from_str(&collateral)
+                .unwrap_or_else(|_| env::panic_str("Invalid collateral format"));
+            let tcb_info_str = tcb_info
+                .as_deref()
+                .unwrap_or_else(|| env::panic_str("tcb_info is required for TDX attestation"));
+            let tcb_info_data: TcbInfo = near_sdk::serde_json::from_str(tcb_info_str)
+                .unwrap_or_else(|_| env::panic_str("Invalid TCB info format"));
+            log!("Detected Intel TDX attestation");
+            Attestation::Dstack(DstackAttestation::new(
+                quote_bytes,
+                collateral_data,
+                tcb_info_data,
+            ))
+        };
 
         // Get the signer's public key
         let public_key = env::signer_account_pk();
