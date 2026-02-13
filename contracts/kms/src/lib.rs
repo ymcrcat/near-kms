@@ -176,10 +176,12 @@ impl Contract {
         // Auto-detect TEE type and build attestation
         let attestation = if is_sev_snp_report(&quote_bytes_vec) {
             // AMD SEV-SNP attestation
-            let snp_collateral: SevSnpCollateral =
-                near_sdk::serde_json::from_str(&collateral)
-                    .unwrap_or_else(|_| env::panic_str("Invalid SEV-SNP collateral format"));
-            log!("Detected SEV-SNP attestation (processor: {})", snp_collateral.processor_model);
+            let snp_collateral: SevSnpCollateral = near_sdk::serde_json::from_str(&collateral)
+                .unwrap_or_else(|_| env::panic_str("Invalid SEV-SNP collateral format"));
+            log!(
+                "Detected SEV-SNP attestation (processor: {})",
+                snp_collateral.processor_model
+            );
             Attestation::SevSnp(SevSnpAttestation::new(quote_bytes, snp_collateral))
         } else {
             // Intel TDX/DCAP attestation

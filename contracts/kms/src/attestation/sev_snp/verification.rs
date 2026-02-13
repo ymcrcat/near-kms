@@ -6,7 +6,7 @@
 ///
 /// Implements minimal X.509 DER parsing to extract only the fields needed:
 /// - TBS Certificate (To-Be-Signed) bytes for signature input
-/// - SubjectPublicKeyInfo for the signer's public key
+/// - `SubjectPublicKeyInfo` for the signer's public key
 /// - Signature value from the certificate
 use alloc::{format, string::String, vec::Vec};
 use ring::signature::{self, UnparsedPublicKey};
@@ -27,17 +27,18 @@ pub fn verify_attestation(
     collateral: &SevSnpCollateral,
 ) -> Result<(), VerificationError> {
     // Step 1: Get embedded root certificates
-    let ark_der = super::amd_root_certs::get_ark_der(&collateral.processor_model)
-        .ok_or_else(|| {
+    let ark_der =
+        super::amd_root_certs::get_ark_der(&collateral.processor_model).ok_or_else(|| {
             VerificationError::UnsupportedProcessor(collateral.processor_model.clone())
         })?;
 
-    let ask_der = match &collateral.ask_cert_der {
-        Some(der) => der.as_slice(),
-        None => super::amd_root_certs::get_ask_der(&collateral.processor_model).ok_or_else(
-            || VerificationError::UnsupportedProcessor(collateral.processor_model.clone()),
-        )?,
-    };
+    let ask_der =
+        match &collateral.ask_cert_der {
+            Some(der) => der.as_slice(),
+            None => super::amd_root_certs::get_ask_der(&collateral.processor_model).ok_or_else(
+                || VerificationError::UnsupportedProcessor(collateral.processor_model.clone()),
+            )?,
+        };
 
     // Step 2: Verify ASK is signed by ARK (RSA-PSS SHA-384)
     verify_cert_signature(ark_der, ask_der, SignatureKind::RsaPss)
@@ -64,10 +65,8 @@ pub fn verify_report_signature(
     let signed_data = SevSnpReport::signed_bytes(raw_report);
     let sig_bytes = SevSnpReport::signature_fixed(raw_report);
 
-    let public_key = UnparsedPublicKey::new(
-        &signature::ECDSA_P384_SHA384_FIXED,
-        vcek_ec_pubkey_der,
-    );
+    let public_key =
+        UnparsedPublicKey::new(&signature::ECDSA_P384_SHA384_FIXED, vcek_ec_pubkey_der);
 
     public_key
         .verify(signed_data, &sig_bytes)
@@ -118,10 +117,8 @@ fn verify_cert_signature(
     match kind {
         SignatureKind::RsaPss => {
             // AMD ARK/ASK use RSA 4096-bit with RSASSA-PSS SHA-384
-            let public_key = UnparsedPublicKey::new(
-                &signature::RSA_PSS_2048_8192_SHA384,
-                parent_spki,
-            );
+            let public_key =
+                UnparsedPublicKey::new(&signature::RSA_PSS_2048_8192_SHA384, parent_spki);
             public_key
                 .verify(child_tbs, &child_sig)
                 .map_err(|_| VerificationError::DerParse("RSA-PSS signature mismatch".into()))
@@ -164,7 +161,7 @@ const TAG_BIT_STRING: u8 = 0x03;
 /// ASN.1 tag for context-specific constructed [0] (version)
 const TAG_CONTEXT_0: u8 = 0xA0;
 
-/// Read a DER tag and length, returning (content_start, content_length, total_element_length).
+/// Read a DER tag and length, returning (`content_start`, `content_length`, `total_element_length`).
 fn der_read_tl(data: &[u8], offset: usize) -> Result<(usize, usize, usize), VerificationError> {
     if offset >= data.len() {
         return Err(VerificationError::DerParse("offset out of bounds".into()));
@@ -172,9 +169,7 @@ fn der_read_tl(data: &[u8], offset: usize) -> Result<(usize, usize, usize), Veri
     let _tag = data[offset];
     let len_start = offset + 1;
     if len_start >= data.len() {
-        return Err(VerificationError::DerParse(
-            "truncated after tag".into(),
-        ));
+        return Err(VerificationError::DerParse("truncated after tag".into()));
     }
 
     let first_len_byte = data[len_start];
@@ -255,17 +250,15 @@ fn extract_signature_value(cert_der: &[u8]) -> Result<Vec<u8>, VerificationError
     Ok(cert_der[sig_content_start + 1..sig_content_start + sig_content_length].to_vec())
 }
 
-/// Extract the public key bytes from a DER-encoded X.509 certificate's SubjectPublicKeyInfo.
+/// Extract the public key bytes from a DER-encoded X.509 certificate's `SubjectPublicKeyInfo`.
 ///
-/// Returns the content of the BIT STRING inside SubjectPublicKeyInfo (after the
+/// Returns the content of the BIT STRING inside `SubjectPublicKeyInfo` (after the
 /// "unused bits" byte), which is:
-/// - For RSA keys: the DER-encoded RSAPublicKey SEQUENCE { modulus, exponent } (PKCS#1 format)
+/// - For RSA keys: the DER-encoded `RSAPublicKey` SEQUENCE { modulus, exponent } (PKCS#1 format)
 /// - For EC keys: the uncompressed EC point (0x04 || x || y)
 ///
 /// This is what `ring`'s `UnparsedPublicKey` expects for both RSA and ECDSA algorithms.
-fn extract_subject_public_key_info_bytes(
-    cert_der: &[u8],
-) -> Result<Vec<u8>, VerificationError> {
+fn extract_subject_public_key_info_bytes(cert_der: &[u8]) -> Result<Vec<u8>, VerificationError> {
     let (outer_content_start, _, _) = der_read_tl(cert_der, 0)?;
 
     // TBS Certificate is the first element
@@ -374,7 +367,7 @@ mod tests {
         let ark_der = super::super::amd_root_certs::ARK_MILAN_DER;
         let ask_der = super::super::amd_root_certs::ASK_MILAN_DER;
         let result = verify_cert_signature(ark_der, ask_der, SignatureKind::RsaPss);
-        assert!(result.is_ok(), "ASK should be signed by ARK: {:?}", result);
+        assert!(result.is_ok(), "ASK should be signed by ARK: {result:?}");
     }
 
     #[test]
@@ -382,29 +375,21 @@ mod tests {
         let ark_der = super::super::amd_root_certs::ARK_GENOA_DER;
         let ask_der = super::super::amd_root_certs::ASK_GENOA_DER;
         let result = verify_cert_signature(ark_der, ask_der, SignatureKind::RsaPss);
-        assert!(result.is_ok(), "ASK should be signed by ARK: {:?}", result);
+        assert!(result.is_ok(), "ASK should be signed by ARK: {result:?}");
     }
 
     #[test]
     fn test_verify_ark_self_signed_milan() {
         let ark_der = super::super::amd_root_certs::ARK_MILAN_DER;
         let result = verify_cert_signature(ark_der, ark_der, SignatureKind::RsaPss);
-        assert!(
-            result.is_ok(),
-            "ARK should be self-signed: {:?}",
-            result
-        );
+        assert!(result.is_ok(), "ARK should be self-signed: {result:?}");
     }
 
     #[test]
     fn test_verify_ark_self_signed_genoa() {
         let ark_der = super::super::amd_root_certs::ARK_GENOA_DER;
         let result = verify_cert_signature(ark_der, ark_der, SignatureKind::RsaPss);
-        assert!(
-            result.is_ok(),
-            "ARK should be self-signed: {:?}",
-            result
-        );
+        assert!(result.is_ok(), "ARK should be self-signed: {result:?}");
     }
 
     #[test]

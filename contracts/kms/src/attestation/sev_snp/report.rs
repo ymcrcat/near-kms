@@ -99,7 +99,10 @@ impl core::fmt::Display for ReportParseError {
             }
             Self::UnsupportedVersion(v) => write!(f, "Unsupported version: {v}, expected >= 2"),
             Self::UnsupportedSignatureAlgo(a) => {
-                write!(f, "Unsupported signature algo: {a}, expected {SIG_ALGO_ECDSA_P384}")
+                write!(
+                    f,
+                    "Unsupported signature algo: {a}, expected {SIG_ALGO_ECDSA_P384}"
+                )
             }
         }
     }
@@ -188,7 +191,7 @@ impl SevSnpReport {
         (r_be, s_be)
     }
 
-    /// Build the 96-byte fixed-length ECDSA P-384 signature (r_be || s_be) suitable
+    /// Build the 96-byte fixed-length ECDSA P-384 signature (`r_be` || `s_be`) suitable
     /// for `ring::signature::ECDSA_P384_SHA384_FIXED`.
     pub fn signature_fixed(raw: &[u8]) -> Vec<u8> {
         let (r_be, s_be) = Self::signature_r_s_be(raw);
@@ -309,7 +312,7 @@ mod tests {
         assert!(!is_sev_snp_report(&bad));
 
         // Wrong sig_algo
-        let mut bad = bytes.clone();
+        let mut bad = bytes;
         bad[SIG_ALGO_OFFSET..SIG_ALGO_OFFSET + 4].copy_from_slice(&0u32.to_le_bytes());
         assert!(!is_sev_snp_report(&bad));
     }

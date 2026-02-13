@@ -140,11 +140,8 @@ impl Attestation {
     /// 1. Parses the raw report bytes
     /// 2. Validates the certificate chain (ARK -> ASK -> VCEK)
     /// 3. Verifies the report signature (ECDSA P-384) using the VCEK public key
-    /// 4. Verifies report_data matches the expected value (worker key binding)
-    fn verify_sev_snp(
-        attestation: &SevSnpAttestation,
-        expected_report_data: &ReportData,
-    ) -> bool {
+    /// 4. Verifies `report_data` matches the expected value (worker key binding)
+    fn verify_sev_snp(attestation: &SevSnpAttestation, expected_report_data: &ReportData) -> bool {
         // Step 1: Parse report
         let report = match SevSnpReport::from_bytes(&attestation.report_bytes) {
             Ok(r) => r,
@@ -155,15 +152,17 @@ impl Attestation {
         };
 
         // Step 2+3: Validate cert chain and verify report signature
-        let crypto_ok =
-            match verification::verify_attestation(&attestation.report_bytes, &report, &attestation.collateral)
-            {
-                Ok(()) => true,
-                Err(err) => {
-                    log!("SEV-SNP: Attestation verification failed: {}", err);
-                    false
-                }
-            };
+        let crypto_ok = match verification::verify_attestation(
+            &attestation.report_bytes,
+            &report,
+            &attestation.collateral,
+        ) {
+            Ok(()) => true,
+            Err(err) => {
+                log!("SEV-SNP: Attestation verification failed: {}", err);
+                false
+            }
+        };
         log!(
             "SEV-SNP cert chain + signature verification: {}",
             if crypto_ok { "PASSED" } else { "FAILED" }
