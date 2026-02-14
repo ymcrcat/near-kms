@@ -174,31 +174,51 @@ impl Contract {
         let quote_bytes = QuoteBytes::from(quote_bytes_vec.clone());
 
         // Auto-detect TEE type and build attestation
-        let attestation = if is_sev_snp_report(&quote_bytes_vec) {
-            // AMD SEV-SNP attestation
+        if is_sev_snp_report(&quote_bytes_vec) {
+            // AMD SEV-SNP: verify and log, but do not derive a key.
+            // Measurement and device ID checks are not yet implemented.
             let snp_collateral: SevSnpCollateral = near_sdk::serde_json::from_str(&collateral)
                 .unwrap_or_else(|_| env::panic_str("Invalid SEV-SNP collateral format"));
             log!(
                 "Detected SEV-SNP attestation (processor: {})",
                 snp_collateral.processor_model
             );
-            Attestation::SevSnp(SevSnpAttestation::new(quote_bytes, snp_collateral))
-        } else {
-            // Intel TDX/DCAP attestation
-            let collateral_data = Collateral::from_str(&collateral)
-                .unwrap_or_else(|_| env::panic_str("Invalid collateral format"));
-            let tcb_info_str = tcb_info
-                .as_deref()
-                .unwrap_or_else(|| env::panic_str("tcb_info is required for TDX attestation"));
-            let tcb_info_data: TcbInfo = near_sdk::serde_json::from_str(tcb_info_str)
-                .unwrap_or_else(|_| env::panic_str("Invalid TCB info format"));
-            log!("Detected Intel TDX attestation");
-            Attestation::Dstack(DstackAttestation::new(
-                quote_bytes,
-                collateral_data,
-                tcb_info_data,
-            ))
-        };
+            let attestation =
+                Attestation::SevSnp(SevSnpAttestation::new(quote_bytes, snp_collateral));
+
+            let public_key = env::signer_account_pk();
+            let expected_report_data = ReportData::new(public_key);
+
+            let is_valid = attestation.verify(
+                expected_report_data,
+                0,
+                &[],
+                &[],
+            );
+            log!(
+                "SEV-SNP attestation verification result: {}. Key derivation is disabled for SEV-SNP.",
+                if is_valid { "VALID" } else { "INVALID" }
+            );
+            env::panic_str(
+                "SEV-SNP attestation key derivation is not yet supported. \
+                 Measurement verification must be implemented first.",
+            );
+        }
+
+        // Intel TDX/DCAP attestation
+        let collateral_data = Collateral::from_str(&collateral)
+            .unwrap_or_else(|_| env::panic_str("Invalid collateral format"));
+        let tcb_info_str = tcb_info
+            .as_deref()
+            .unwrap_or_else(|| env::panic_str("tcb_info is required for TDX attestation"));
+        let tcb_info_data: TcbInfo = near_sdk::serde_json::from_str(tcb_info_str)
+            .unwrap_or_else(|_| env::panic_str("Invalid TCB info format"));
+        log!("Detected Intel TDX attestation");
+        let attestation = Attestation::Dstack(DstackAttestation::new(
+            quote_bytes,
+            collateral_data,
+            tcb_info_data,
+        ));
 
         // Get the signer's public key
         let public_key = env::signer_account_pk();
