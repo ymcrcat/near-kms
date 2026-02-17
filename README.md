@@ -287,6 +287,23 @@ cargo test --test test_app_contract
 cargo test --features test -- --nocapture
 ```
 
+### Building WASM Files with Docker
+
+The `cargo-near` toolchain requires a C compiler with wasm32 target support (e.g., for the `ring` crate). On macOS this may not work out of the box. A `Dockerfile` is provided to build the WASM files in a containerized environment:
+
+```bash
+# Build the Docker image
+docker build -t near-kms-builder .
+
+# Build all contract WASMs inside the container
+docker run --rm -v "$(pwd)":/workspace near-kms-builder bash -c \
+  "cd contracts/kms && cargo near build reproducible-wasm && \
+   cd ../app && cargo near build reproducible-wasm && \
+   cd ../mock-mpc && cargo near build reproducible-wasm"
+```
+
+The compiled WASM files will be available in the `contracts/*/res/` directories and can then be used for running tests locally.
+
 ### Linting
 
 ```bash
