@@ -166,7 +166,6 @@ fn der_read_tl(data: &[u8], offset: usize) -> Result<(usize, usize, usize), Veri
     if offset >= data.len() {
         return Err(VerificationError::DerParse("offset out of bounds".into()));
     }
-    let _tag = data[offset];
     let len_start = offset + 1;
     if len_start >= data.len() {
         return Err(VerificationError::DerParse("truncated after tag".into()));
@@ -246,7 +245,6 @@ fn extract_signature_value(cert_der: &[u8]) -> Result<Vec<u8>, VerificationError
     }
 
     // BIT STRING has a leading "unused bits" byte; for RSA/ECDSA signatures it's always 0
-    let _unused_bits = cert_der[sig_content_start];
     Ok(cert_der[sig_content_start + 1..sig_content_start + sig_content_length].to_vec())
 }
 
@@ -269,14 +267,15 @@ fn extract_subject_public_key_info_bytes(cert_der: &[u8]) -> Result<Vec<u8>, Ver
     // Fields: version[0], serialNumber, signature, issuer, validity, subject, subjectPublicKeyInfo
     // Note: version is context-tagged [0] and OPTIONAL (but always present in v3 certs)
     let mut pos = tbs_content_start;
-    let mut field_index: usize = 0;
 
     // If the first element is context [0] (version), skip it
-    if pos < cert_der.len() && cert_der[pos] == TAG_CONTEXT_0 {
+    let mut field_index: usize = if pos < cert_der.len() && cert_der[pos] == TAG_CONTEXT_0 {
         let (_, _, total) = der_read_tl(cert_der, pos)?;
         pos += total;
-        field_index = 1; // version was field 0, next is serialNumber
-    }
+        1 // version was field 0, next is serialNumber
+    } else {
+        0
+    };
 
     // Skip fields until we reach subjectPublicKeyInfo (field index 6)
     while field_index < 6 {

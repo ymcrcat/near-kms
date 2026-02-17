@@ -7,7 +7,6 @@
 /// which in turn signs chip-specific VCEK certificates.
 ///
 /// Both ARK and ASK use RSA 4096-bit keys with RSASSA-PSS SHA-384 signatures.
-
 /// AMD Root Key for Milan (EPYC 7003 series) in DER format.
 pub const ARK_MILAN_DER: &[u8] = include_bytes!("../assets/ark_milan.der");
 

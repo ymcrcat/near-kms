@@ -36,7 +36,7 @@ async fn test_add_kms_compose_hash() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // Add compose hash
-    add_kms_compose_hash(&owner, &kms_contract, COMPOSE_HASH).await?;
+    let _ = add_kms_compose_hash(&owner, &kms_contract, COMPOSE_HASH).await?;
 
     // Verify compose hash is now allowed
     let allowed_after = is_kms_compose_hash_allowed(&kms_contract, COMPOSE_HASH).await?;
@@ -63,7 +63,7 @@ async fn test_remove_kms_compose_hash() -> Result<(), Box<dyn std::error::Error>
     let kms_contract = deploy_kms_contract(&sandbox, &owner).await?;
 
     // Add compose hash first
-    add_kms_compose_hash(&owner, &kms_contract, COMPOSE_HASH).await?;
+    let _ = add_kms_compose_hash(&owner, &kms_contract, COMPOSE_HASH).await?;
 
     // Verify it's allowed
     let allowed_before = is_kms_compose_hash_allowed(&kms_contract, COMPOSE_HASH).await?;
@@ -73,7 +73,7 @@ async fn test_remove_kms_compose_hash() -> Result<(), Box<dyn std::error::Error>
     );
 
     // Remove compose hash
-    remove_kms_compose_hash(&owner, &kms_contract, COMPOSE_HASH).await?;
+    let _ = remove_kms_compose_hash(&owner, &kms_contract, COMPOSE_HASH).await?;
 
     // Verify it's no longer allowed
     let allowed_after = is_kms_compose_hash_allowed(&kms_contract, COMPOSE_HASH).await?;
@@ -103,7 +103,7 @@ async fn test_request_kms_root_key() -> Result<(), Box<dyn std::error::Error>> {
     let kms_contract = deploy_kms_contract(&sandbox, &owner).await?;
 
     // Add compose hash first
-    add_kms_compose_hash(&owner, &kms_contract, COMPOSE_HASH).await?;
+    let _ = add_kms_compose_hash(&owner, &kms_contract, COMPOSE_HASH).await?;
 
     // Verify compose hash is allowed
     let allowed = is_kms_compose_hash_allowed(&kms_contract, COMPOSE_HASH).await?;
@@ -176,7 +176,7 @@ async fn test_add_os_image_hash() -> Result<(), Box<dyn std::error::Error>> {
     let allowed_before = is_os_image_allowed(&kms_contract, os_image_hash).await?;
     assert!(!allowed_before, "OS image should not be allowed initially");
 
-    add_os_image_hash(&owner, &kms_contract, os_image_hash).await?;
+    let _ = add_os_image_hash(&owner, &kms_contract, os_image_hash).await?;
 
     // Verify OS image is now allowed
     let allowed_after = is_os_image_allowed(&kms_contract, os_image_hash).await?;
@@ -210,7 +210,7 @@ async fn test_set_gateway_app_id() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let gateway_app_id = "gateway.app.testnet";
-    set_gateway_app_id(&owner, &kms_contract, gateway_app_id).await?;
+    let _ = set_gateway_app_id(&owner, &kms_contract, gateway_app_id).await?;
 
     // Verify gateway app ID is now set
     let gateway_app_id_after = get_gateway_app_id(&kms_contract).await?;

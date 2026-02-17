@@ -33,7 +33,7 @@ async fn test_add_compose_hash() -> Result<(), Box<dyn std::error::Error>> {
         deploy_app_contract(&sandbox, &owner, &kms_contract, false, false, None, None).await?;
 
     // Add compose hash
-    add_app_compose_hash(&owner, &app_contract, COMPOSE_HASH).await?;
+    let _ = add_app_compose_hash(&owner, &app_contract, COMPOSE_HASH).await?;
 
     println!("Test passed: Compose hash added successfully");
 
@@ -51,10 +51,10 @@ async fn test_remove_compose_hash() -> Result<(), Box<dyn std::error::Error>> {
         deploy_app_contract(&sandbox, &owner, &kms_contract, false, false, None, None).await?;
 
     // Add compose hash first
-    add_app_compose_hash(&owner, &app_contract, COMPOSE_HASH).await?;
+    let _ = add_app_compose_hash(&owner, &app_contract, COMPOSE_HASH).await?;
 
     // Remove compose hash
-    remove_app_compose_hash(&owner, &app_contract, COMPOSE_HASH).await?;
+    let _ = remove_app_compose_hash(&owner, &app_contract, COMPOSE_HASH).await?;
 
     println!("Test passed: Compose hash removed successfully");
 
@@ -72,7 +72,7 @@ async fn test_add_device() -> Result<(), Box<dyn std::error::Error>> {
         deploy_app_contract(&sandbox, &owner, &kms_contract, false, false, None, None).await?;
 
     let device_id = "device_123";
-    add_app_device(&owner, &app_contract, device_id).await?;
+    let _ = add_app_device(&owner, &app_contract, device_id).await?;
 
     println!("Test passed: Device added successfully");
 
@@ -92,10 +92,10 @@ async fn test_remove_device() -> Result<(), Box<dyn std::error::Error>> {
     let device_id = "device_123";
 
     // Add device first
-    add_app_device(&owner, &app_contract, device_id).await?;
+    let _ = add_app_device(&owner, &app_contract, device_id).await?;
 
     // Remove device
-    remove_app_device(&owner, &app_contract, device_id).await?;
+    let _ = remove_app_device(&owner, &app_contract, device_id).await?;
 
     println!("Test passed: Device removed successfully");
 
@@ -112,7 +112,7 @@ async fn test_set_allow_any_device() -> Result<(), Box<dyn std::error::Error>> {
     let app_contract =
         deploy_app_contract(&sandbox, &owner, &kms_contract, false, false, None, None).await?;
 
-    set_allow_any_device(&owner, &app_contract, true).await?;
+    let _ = set_allow_any_device(&owner, &app_contract, true).await?;
 
     println!("Test passed: Allow any device set successfully");
 
@@ -130,11 +130,11 @@ async fn test_is_app_allowed() -> Result<(), Box<dyn std::error::Error>> {
         deploy_app_contract(&sandbox, &owner, &kms_contract, false, false, None, None).await?;
 
     // Add compose hash first
-    add_app_compose_hash(&owner, &app_contract, COMPOSE_HASH).await?;
+    let _ = add_app_compose_hash(&owner, &app_contract, COMPOSE_HASH).await?;
 
     // Add device ID to allowed list
     let device_id = "device_123";
-    add_app_device(&owner, &app_contract, device_id).await?;
+    let _ = add_app_device(&owner, &app_contract, device_id).await?;
 
     // Check if app is allowed
     let boot_info = json!({
@@ -233,7 +233,7 @@ async fn test_disable_upgrades() -> Result<(), Box<dyn std::error::Error>> {
     let app_contract =
         deploy_app_contract(&sandbox, &owner, &kms_contract, false, false, None, None).await?;
 
-    disable_app_upgrades(&owner, &app_contract).await?;
+    let _ = disable_app_upgrades(&owner, &app_contract).await?;
 
     println!("Test passed: Upgrades disabled successfully");
 

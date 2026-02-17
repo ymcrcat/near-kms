@@ -93,8 +93,7 @@ pub async fn deploy_mock_mpc_contract(
 
     assert!(
         deploy_result.is_success(),
-        "Mock MPC contract deployment should succeed: {:#?}",
-        deploy_result.into_result().unwrap_err()
+        "Mock MPC contract deployment should succeed"
     );
 
     let mpc_contract = deploy_result.result;
@@ -104,8 +103,7 @@ pub async fn deploy_mock_mpc_contract(
 
     assert!(
         result.is_success(),
-        "Mock MPC contract initialization should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "Mock MPC contract initialization should succeed: {result:#?}",
     );
 
     Ok(mpc_contract)
@@ -130,8 +128,7 @@ pub async fn deploy_kms_contract(
 
     assert!(
         deploy_result.is_success(),
-        "KMS contract deployment should succeed: {:#?}",
-        deploy_result.into_result().unwrap_err()
+        "KMS contract deployment should succeed"
     );
 
     let kms_contract = deploy_result.result;
@@ -149,8 +146,7 @@ pub async fn deploy_kms_contract(
 
     assert!(
         result.is_success(),
-        "KMS contract initialization should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "KMS contract initialization should succeed: {result:#?}",
     );
 
     Ok(kms_contract)
@@ -172,8 +168,7 @@ pub async fn add_kms_compose_hash(
 
     assert!(
         result.is_success(),
-        "Adding KMS compose hash should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "Adding KMS compose hash should succeed: {result:#?}",
     );
 
     Ok(result)
@@ -195,8 +190,7 @@ pub async fn remove_kms_compose_hash(
 
     assert!(
         result.is_success(),
-        "Removing KMS compose hash should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "Removing KMS compose hash should succeed: {result:#?}",
     );
 
     Ok(result)
@@ -243,8 +237,7 @@ pub async fn add_os_image_hash(
 
     assert!(
         result.is_success(),
-        "Adding OS image hash should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "Adding OS image hash should succeed: {result:#?}",
     );
 
     Ok(result)
@@ -266,8 +259,7 @@ pub async fn remove_os_image_hash(
 
     assert!(
         result.is_success(),
-        "Removing OS image hash should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "Removing OS image hash should succeed: {result:#?}",
     );
 
     Ok(result)
@@ -289,8 +281,7 @@ pub async fn set_gateway_app_id(
 
     assert!(
         result.is_success(),
-        "Setting gateway app ID should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "Setting gateway app ID should succeed: {result:#?}",
     );
 
     Ok(result)
@@ -353,8 +344,7 @@ pub async fn deploy_app_contract(
 
     assert!(
         result.is_success(),
-        "App contract registration should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "App contract registration should succeed: {result:#?}",
     );
 
     // Create a Contract instance from the account ID
@@ -474,8 +464,7 @@ pub async fn add_app_compose_hash(
 
     assert!(
         result.is_success(),
-        "Adding app compose hash should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "Adding app compose hash should succeed: {result:#?}",
     );
 
     Ok(result)
@@ -497,8 +486,7 @@ pub async fn remove_app_compose_hash(
 
     assert!(
         result.is_success(),
-        "Removing app compose hash should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "Removing app compose hash should succeed: {result:#?}",
     );
 
     Ok(result)
@@ -520,8 +508,7 @@ pub async fn add_app_device(
 
     assert!(
         result.is_success(),
-        "Adding device should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "Adding device should succeed: {result:#?}",
     );
 
     Ok(result)
@@ -543,8 +530,7 @@ pub async fn remove_app_device(
 
     assert!(
         result.is_success(),
-        "Removing device should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "Removing device should succeed: {result:#?}",
     );
 
     Ok(result)
@@ -566,8 +552,7 @@ pub async fn set_allow_any_device(
 
     assert!(
         result.is_success(),
-        "Setting allow_any_device should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "Setting allow_any_device should succeed: {result:#?}",
     );
 
     Ok(result)
@@ -603,8 +588,7 @@ pub async fn disable_app_upgrades(
 
     assert!(
         result.is_success(),
-        "Disabling upgrades should succeed: {:#?}",
-        result.into_result().unwrap_err()
+        "Disabling upgrades should succeed: {result:#?}",
     );
 
     Ok(result)

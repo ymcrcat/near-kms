@@ -1,11 +1,9 @@
 use super::{
-    app_compose::AppCompose,
-    collateral::Collateral,
     hash::{DockerComposeHash, DockerImageHash},
-    measurements::ExpectedMeasurements,
     quote::QuoteBytes,
     report_data::ReportData,
     sev_snp::{collateral::SevSnpCollateral, report::SevSnpReport, verification},
+    tdx::{app_compose::AppCompose, collateral::Collateral, measurements::ExpectedMeasurements},
 };
 use alloc::{format, string::String};
 use borsh::{BorshDeserialize, BorshSerialize};

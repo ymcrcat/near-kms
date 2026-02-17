@@ -9,7 +9,7 @@ use near_plugins::{
 use near_sdk::{
     AccountId, Gas, NearToken, PanicOnDefault, PromiseOrValue, assert_one_yocto,
     borsh::BorshDeserialize,
-    env::{self, block_timestamp_ms},
+    env::{self},
     log, near, require,
     store::IterableSet,
 };
@@ -17,11 +17,11 @@ use std::str::FromStr;
 
 use crate::attestation::{
     attestation::{Attestation, DstackAttestation, SevSnpAttestation},
-    collateral::Collateral,
     hash::{DockerComposeHash, DockerImageHash},
     quote::QuoteBytes,
     report_data::ReportData,
     sev_snp::{collateral::SevSnpCollateral, report::is_sev_snp_report},
+    tdx::collateral::Collateral,
 };
 use crate::events::Event;
 use crate::ext::{Bls12381G1PublicKey, CKDRequestArgs, CKDResponse, DomainId, ext_mpc};
@@ -109,6 +109,7 @@ pub struct Contract {
 /// Returns the current block timestamp in milliseconds.
 /// When the `test` feature is enabled, returns a fixed timestamp
 #[must_use]
+#[allow(clippy::missing_const_for_fn)]
 pub fn get_block_timestamp_ms() -> TimestampMs {
     #[cfg(feature = "test")]
     {
@@ -117,7 +118,7 @@ pub fn get_block_timestamp_ms() -> TimestampMs {
     }
     #[cfg(not(feature = "test"))]
     {
-        block_timestamp_ms()
+        near_sdk::env::block_timestamp_ms()
     }
 }
 
